@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Habito } from './entities/habito.entity';
@@ -29,13 +30,43 @@ export class HabitosService {
     return this.habitoRepository.save(nuevoHabito);
   }
 
-  findAll() {
-    return `This action returns all habitos`;
+  /**
+   * Busca todos los hábitos ligados a un usuario específico.
+   * @param idUsuario ID del usuario para filtrar los hábitos.
+   * @returns Una lista de entidades Habito.
+   */
+  async findAll(idUsuario: number): Promise<Habito[]> {
+    // Usamos el método find() del repositorio de TypeORM
+    // y aplicamos una condición 'where' para filtrar por el ID del usuario
+    return this.habitoRepository.find({
+      where: { 
+        id_usuario: idUsuario 
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} habito`;
-  }
+  /**
+     * Busca un hábito específico de un usuario.
+     * @param idHabito ID del hábito a buscar.
+     * @param idUsuario ID del usuario autenticado (para verificar la propiedad).
+     * @returns Los datos del hábito.
+     */
+    async findOne(idHabito: string, idUsuario: number): Promise<Habito> {
+        
+        // 1. Usa findOneBy para buscar un solo resultado.
+        // 2. Filtra por id (del hábito) Y por id_usuario.
+        const habito = await this.habitoRepository.findOneBy({ 
+            id: idHabito,
+            id_usuario: idUsuario, // 💡 CLAVE DE SEGURIDAD: Solo busca en los del usuario
+        });
+
+        if (!habito) {
+            // Si no se encuentra el hábito (o si existe, pero pertenece a otro usuario), lanza un error 404.
+            throw new NotFoundException(`Hábito con ID ${idHabito} no encontrado o no pertenece al usuario.`);
+        }
+
+        return habito; // Retorna el objeto Habito
+    }
 
   update(id: number, updateHabitoDto: UpdateHabitoDto) {
     return `This action updates a #${id} habito`;

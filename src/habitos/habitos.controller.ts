@@ -28,14 +28,24 @@ export class HabitosController {
     return this.habitosService.create(createHabitoDto, idDelUsuario);
   }
 
-  @Get()
-  findAll() {
-    return this.habitosService.findAll();
-  }
+      /**
+     * Ruta para OBTENER TODOS los hábitos del usuario autenticado.
+     * Protegida por JWT.
+     */
+    @Get()
+    @UseGuards(AuthGuard('jwt')) // Proteger también la ruta GET
+    findAll(@Req() req: Request) { //Inyectar el objeto Request
+        // Extraer el ID del usuario del token
+        const idDelUsuario = (req.user as any).id_usuario; 
+        // Llamar al servicio con el ID del usuario
+        return this.habitosService.findAll(idDelUsuario); // 💡 Pasamos el ID real
+    }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.habitosService.findOne(+id);
+  @UseGuards(AuthGuard('jwt')) // 💡 Proteger también la ruta GET
+  findOne(@Param('id') id: string, @Req() req: Request) {
+    const idDelUsuario = (req.user as any).id_usuario; 
+    return this.habitosService.findOne(id, idDelUsuario); // 💡 Pasamos el ID real
   }
 
   @Patch(':id')

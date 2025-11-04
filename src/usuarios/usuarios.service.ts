@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common/exceptions/conflict.exception';
 import { InjectRepository } from '@nestjs/typeorm'; 
 import { Repository } from 'typeorm'; 
+
 import * as bcrypt from 'bcrypt';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
@@ -15,19 +17,32 @@ export class UsuariosService {
   ) {}
 
   //Cambia la lógica para que use la base de datos
-  async create(createUsuarioDto: CreateUsuarioDto) {
-  // Hasheamos la contraseña
-  const salt = await bcrypt.genSalt();
-  const hashedPassword = await bcrypt.hash(createUsuarioDto.password, salt);
+  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+    
+    // 1. 💡 VERIFICACIÓN DE UNICIDAD DEL EMAIL 
+    const usuarioExistente = await this.usuariosRepository.findOne({ 
+      where: { email: createUsuarioDto.email } 
+    });
 
-  // Creamos el usuario pero reemplazamos el password por el hash
-  const nuevoUsuario = this.usuariosRepository.create({
-    ...createUsuarioDto,
-    password: hashedPassword, // Guardamos el hash, no el original
-  });
+    if (usuarioExistente) {
+      // Si el email ya está en uso, lanzamos una excepción 409 Conflict
+      throw new ConflictException(`El correo "${createUsuarioDto.email}" ya está en uso.`);
+    }
 
-  return this.usuariosRepository.save(nuevoUsuario);
-}
+    // 2. Hasheamos la contraseña
+    // Nota: Asegúrate de que bcrypt esté instalado: npm install bcrypt
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(createUsuarioDto.password, salt);
+
+    // 3. Creamos el usuario pero reemplazamos el password por el hash
+    const nuevoUsuario = this.usuariosRepository.create({
+      ...createUsuarioDto,
+      password: hashedPassword, // Guardamos el hash
+    });
+
+    // 4. Guardamos el nuevo usuario y retornamos el resultado
+    return this.usuariosRepository.save(nuevoUsuario);
+  }
 
   async findAll(): Promise<Usuario[]> {
     return await this.usuariosRepository.find();

@@ -8,13 +8,13 @@ import { Usuario } from './entities/usuario.entity';
 
 @Injectable()
 export class UsuariosService {
-  // 4. Inyecta el Repositorio de Usuario en el constructor
+  //Inyecta el Repositorio de Usuario en el constructor
   constructor(
     @InjectRepository(Usuario)
     private usuariosRepository: Repository<Usuario>,
   ) {}
 
-  // 5. Cambia la lógica para que use la base de datos
+  //Cambia la lógica para que use la base de datos
   async create(createUsuarioDto: CreateUsuarioDto) {
   // Hasheamos la contraseña
   const salt = await bcrypt.genSalt();

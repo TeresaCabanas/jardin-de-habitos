@@ -3,7 +3,7 @@ import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport'; // (Este lo crearías)
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('usuarios')
 export class UsuariosController {

@@ -1,5 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
-
+import { Entity, Column, PrimaryGeneratedColumn,OneToMany } from 'typeorm';
+import { Habito } from 'src/habitos/entities/habito.entity';
 @Entity() // Le dice a TypeORM que esta clase es una tabla de BD
 export class Usuario {
   
@@ -9,13 +9,19 @@ export class Usuario {
   @Column() // Crea una columna de tipo "varchar" (texto)
   nombre: string;
 
-  // Puedes añadir más columnas aquí
-  @Column({ nullable: true }) // Columna opcional
+  @Column({ nullable: false }) // Columna opcional
   email: string;
 
   @Column({ default: true }) // Columna con valor por defecto
   estaActivo: boolean;
 
-  @Column({ select: false }) // 'select: false' es una BUENA PRÁCTICA
+  @Column({ select: false }) // Columna que NO se selecciona por defecto
   password: string;         // para que el hash no se envíe en los GET
+  /**
+   * Un Usuario puede tener muchos Habitos.
+   * La entidad 'Habito' se relaciona con esta entidad
+   * a través de su propiedad 'usuario'.
+   */
+  @OneToMany(() => Habito, (habito) => habito.usuario)
+  habitos: Habito[]; // 
 }

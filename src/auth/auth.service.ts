@@ -35,7 +35,6 @@ export class AuthService {
 
     // 3. Si todo está bien, generar el JWT
     const payload = { sub: usuario.id, email: usuario.email }; // 'sub' (subject) es el ID del usuario
-
     return {
       message: 'Login exitoso',
       access_token: this.jwtService.sign(payload),

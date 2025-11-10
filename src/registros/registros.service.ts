@@ -29,7 +29,6 @@ export class RegistrosService {
         id: id_habito, 
         id_usuario: idUsuario 
     });
-
     if (!habito) {
         throw new NotFoundException(`Hábito con ID ${id_habito} no encontrado o no pertenece al usuario.`);
     }
@@ -50,19 +49,16 @@ export class RegistrosService {
     *    throw new ConflictException('Ya existe un registro para este hábito hoy.');
     *}
     */
-
     // 3. Crear el nuevo registro diario
     const nuevoRegistro = this.registroDiaRepository.create({
         ...createRegistroDiaDto,
         id_usuario: idUsuario,
         fecha: new Date(today), // Guardamos la fecha limpia
     });
-
     const registroGuardado = await this.registroDiaRepository.save(nuevoRegistro);
     
     // 4. Aplicar la lógica de la "Mata del Hábito"
     this.actualizarMata(habito, veces_realizadas);
-
     return registroGuardado;
   }
 
@@ -76,7 +72,6 @@ export class RegistrosService {
     // Usamos variables para los nuevos valores
     let nuevaEtapa = habito.etapa_mata;
     let nuevoCalificador = habito.calificador_crecimiento;
-
     // --- LÓGICA DE EXITO (veces_realizadas = 0) ---
     if (vecesRealizadas === 0) {
         // Aumentar el calificador (hasta 3)
@@ -96,7 +91,6 @@ export class RegistrosService {
     else {
         // Reducir el calificador (hasta 0)
         nuevoCalificador = nuevoCalificador - 1;
-
         if (nuevoCalificador > 0) {
             // Reiniciar el calificador y reducir una etapa (la mata decae)
             nuevoCalificador = 3; // Reiniciar a 3 
@@ -107,7 +101,6 @@ export class RegistrosService {
             }
         }
     }
-
     // 5. Guardar los cambios del hábito (si los hay)
     if (nuevaEtapa !== habito.etapa_mata || nuevoCalificador !== habito.calificador_crecimiento) {
       await this.habitoRepository.update(habito.id, {
@@ -118,8 +111,17 @@ export class RegistrosService {
 
   }
 
-  findAll() {
-    return `This action returns all registros`;
+  async findAll(id_habito: string, id_usuario: string): Promise<RegistroDia[]> {
+    const registros = await this.registroDiaRepository.find({
+      where: { 
+        id_usuario: id_usuario,
+        id_habito: id_habito,
+      },
+    });
+    if (registros.length === 0) {
+        throw new NotFoundException(`No se encontraron registros para el hábito con ID ${id_usuario}.`);
+    }
+    return registros;
   }
 
   findOne(id: number) {

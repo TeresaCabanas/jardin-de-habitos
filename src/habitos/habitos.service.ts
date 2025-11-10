@@ -25,7 +25,6 @@ export class HabitosService {
       ...createHabitoDto,
       id_usuario: idUsuario, //Asignamos el ID del token
     });
-
     // Guardamos la nueva entidad en la base de datos
     return this.habitoRepository.save(nuevoHabito);
   }
@@ -57,14 +56,12 @@ export class HabitosService {
         // 2. Filtra por id (del hábito) Y por id_usuario.
         const habito = await this.habitoRepository.findOneBy({ 
             id: idHabito,
-            id_usuario: idUsuario, // 💡 CLAVE DE SEGURIDAD: Solo busca en los del usuario
+            id_usuario: idUsuario, //Solo busca en los del usuario
         });
-
         if (!habito) {
             // Si no se encuentra el hábito (o si existe, pero pertenece a otro usuario), lanza un error 404.
             throw new NotFoundException(`Hábito con ID ${idHabito} no encontrado o no pertenece al usuario.`);
         }
-
         return habito; // Retorna el objeto Habito
     }
 

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Req, Patch, Param, Delete, UseGuards } fro
 import { RegistrosService } from './registros.service';
 import { CreateRegistroDiaDto } from './dto/create-registro.dto';
 import { UpdateRegistroDto } from './dto/update-registro.dto';
+import { HabitoDto } from './dto/habito.dto';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 
@@ -15,12 +16,12 @@ export class RegistrosController {
    * Protegida por JWT.
    */
   @Post()
-  @UseGuards(AuthGuard('jwt')) // Proteger la ruta con JWT
+  @UseGuards(AuthGuard('jwt'))
   create(
     @Body() createRegistroDiaDto: CreateRegistroDiaDto,
     @Req() req: Request, 
   ) {
-    // 💡 Extraemos el ID del usuario del token
+    // Extraemos el ID del usuario del token
     const idDelUsuario = (req.user as any).id_usuario; 
 
     // Llamamos al servicio para crear el registro y actualizar la mata.
@@ -28,8 +29,13 @@ export class RegistrosController {
   }
 
   @Get()
-  findAll() {
-    return this.registrosService.findAll();
+  @UseGuards(AuthGuard('jwt')) // Proteger la ruta con JWT
+  findAll(
+    @Body() { id_habito }: HabitoDto,
+    @Req() req: Request,
+  ) {
+    const id_usuario = (req.user as any).id_usuario; 
+    return this.registrosService.findAll(id_habito, id_usuario);
   }
 
   @Get(':id')

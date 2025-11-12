@@ -5,10 +5,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { AuthModule } from './auth/auth.module';
+import { HabitosModule } from './habitos/habitos.module';
+import { RegistroDiaModule } from './registros/registros.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }), // carga .env y lo hace global
+    ConfigModule.forRoot({ isGlobal: true }), //carga .env y lo hace global
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -25,6 +27,8 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsuariosModule,
     AuthModule,
+    HabitosModule,
+    RegistroDiaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

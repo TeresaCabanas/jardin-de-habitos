@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common/exceptions/conflict.exception';
 import { InjectRepository } from '@nestjs/typeorm'; 
 import { Repository } from 'typeorm'; 
+
 import * as bcrypt from 'bcrypt';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
@@ -8,26 +10,39 @@ import { Usuario } from './entities/usuario.entity';
 
 @Injectable()
 export class UsuariosService {
-  // 4. Inyecta el Repositorio de Usuario en el constructor
+  //Inyecta el Repositorio de Usuario en el constructor
   constructor(
     @InjectRepository(Usuario)
     private usuariosRepository: Repository<Usuario>,
   ) {}
 
-  // 5. Cambia la lógica para que use la base de datos
-  async create(createUsuarioDto: CreateUsuarioDto) {
-  // Hasheamos la contraseña
-  const salt = await bcrypt.genSalt();
-  const hashedPassword = await bcrypt.hash(createUsuarioDto.password, salt);
+  //Cambia la lógica para que use la base de datos
+  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+    
+    // 1. 💡 VERIFICACIÓN DE UNICIDAD DEL EMAIL 
+    const usuarioExistente = await this.usuariosRepository.findOne({ 
+      where: { email: createUsuarioDto.email } 
+    });
 
-  // Creamos el usuario pero reemplazamos el password por el hash
-  const nuevoUsuario = this.usuariosRepository.create({
-    ...createUsuarioDto,
-    password: hashedPassword, // Guardamos el hash, no el original
-  });
+    if (usuarioExistente) {
+      // Si el email ya está en uso, lanzamos una excepción 409 Conflict
+      throw new ConflictException(`El correo "${createUsuarioDto.email}" ya está en uso.`);
+    }
 
-  return this.usuariosRepository.save(nuevoUsuario);
-}
+    // 2. Hasheamos la contraseña
+    // Nota: Asegúrate de que bcrypt esté instalado: npm install bcrypt
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(createUsuarioDto.password, salt);
+
+    // 3. Creamos el usuario pero reemplazamos el password por el hash
+    const nuevoUsuario = this.usuariosRepository.create({
+      ...createUsuarioDto,
+      password: hashedPassword, // Guardamos el hash
+    });
+
+    // 4. Guardamos el nuevo usuario y retornamos el resultado
+    return this.usuariosRepository.save(nuevoUsuario);
+  }
 
   async findAll(): Promise<Usuario[]> {
     return await this.usuariosRepository.find();
@@ -43,20 +58,20 @@ export class UsuariosService {
       .getOne();
   }
   
-  async findOne(id: number): Promise<Usuario> {
+  async findOne(id: string): Promise<Usuario> {
     const usuario = await this.usuariosRepository.findOneBy({ id });
     if (!usuario) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     return usuario;
   }
 
-  async update(id: number, updateUsuarioDto: UpdateUsuarioDto): Promise<Usuario> {
+  async update(id: string, updateUsuarioDto: UpdateUsuarioDto): Promise<Usuario> {
     // mejor usar preload para combinar y validar existencia
     const usuario = await this.usuariosRepository.preload({ id, ...updateUsuarioDto });
     if (!usuario) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     return this.usuariosRepository.save(usuario);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const result = await this.usuariosRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
   }
